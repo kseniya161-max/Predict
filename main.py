@@ -1,12 +1,8 @@
-import requests
+from fastapi import FastAPI
+from database import engine
 
-url = "https://api.football-data.org/v4/matches"
+app = FastAPI()
 
-headers = {
-    "X-Auth-Token": "a5d744d4d7a04811806a614ab9802eb8"
-}
-
-response = requests.get(url, headers=headers)
-
-print(response.status_code)
-print(response.json())
+@app.get("/")
+def get_root():
+    return {"message": "ok"}
