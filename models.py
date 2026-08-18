@@ -7,6 +7,8 @@
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
+from database import Base
+
 
 class Match(Base):
     __tablename__='matches'
