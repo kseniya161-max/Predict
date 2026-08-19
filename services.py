@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api import get_matches
-from models import Match
+from api import get_matches, get_standings
+from models import Match, Statistic
 from database import AsyncSessionLocal
 
 
@@ -33,5 +33,30 @@ async def save_matches():
             )
 
             session.add(new_match)
+
+        await session.commit()
+
+
+async def save_statistics():
+    data = await get_standings()
+    table = data["standings"][0]['table']
+
+    async with AsyncSessionLocal() as session:
+        for item in table:
+            existing_item = await session.scalar(
+                select(Statistic).where(Statistic.team == item["team"]["name"]))
+
+            if existing_item:
+                continue
+
+            new_statistic = Statistic(
+                team=item["team"]["name"],
+                wins=item["won"],
+                draws=item["draw"],
+                losses=item["lost"],
+                goals_scored=item["goalsFor"],
+                goals_conceded=item["goalsAgainst"],
+            )
+            session.add(new_statistic)
 
         await session.commit()
