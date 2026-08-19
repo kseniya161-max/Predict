@@ -9,6 +9,12 @@ headers = {
     }
 
 
+BASE_URL_NEWS='https://newsapi.org/v2/everything'
+headers_news = {
+        "X-Api-Key": settings.API_NEWS
+    }
+
+
 async def get_matches():
     try:
         async with httpx.AsyncClient() as client:
@@ -27,6 +33,24 @@ async def get_standings():
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f'{BASE_URL}competitions/PL/standings', headers=headers)
+            if response.status_code == 404:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException (status_code=502, detail=f'HTTPStatusError {str(e)}')
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f'Bad gateway {str(e)}')
+
+
+async def get_news():
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f'{BASE_URL_NEWS}', headers=headers_news, params={
+                    "q": "Premier League",
+                    "language": "en",
+                    "sortBy": "publishedAt",
+                })
             if response.status_code == 404:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
             response.raise_for_status()
