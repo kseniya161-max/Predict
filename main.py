@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from database import engine
+from routers import router
+
 
 app = FastAPI()
 
-@app.get("/")
-def get_root():
-    return {"message": "ok"}
+app.include_router(router)
