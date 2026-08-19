@@ -16,6 +16,7 @@ class Match(Base):
 
 
 class Statistic(Base):
+    """"турнирная статистика команд"""
     __tablename__ = 'statistic'
     id: Mapped[int] = mapped_column(primary_key=True)
     team: Mapped[str] = mapped_column(String(100))
