@@ -1,12 +1,13 @@
 from http.client import HTTPException
-
-from fastapi import APIRouter
+from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Request
 from sqlalchemy import select
 from database import AsyncSessionLocal
 from models import Statistic, Match, News, Prediction
 from services import save_matches, save_statistics, save_news, calculate_prediction
 
 router = APIRouter(prefix="/matches", tags=["matches"])
+templates = Jinja2Templates(directory="templates")
 
 
 
@@ -76,4 +77,21 @@ async def get_predictions():
         )
         return result.all()
 
+
+
+@router.get("/page")
+async def matches_page(request: Request):
+    async with AsyncSessionLocal() as session:
+        result = await session.scalars(
+            select(Match).order_by(Match.match_date)
+        )
+        matches = result.all()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "matches": matches,
+        },
+    )
 

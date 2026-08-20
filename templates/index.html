@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Predictor</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 24px 40px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: #9ca3af;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .matches {
+            display: grid;
+            gap: 16px;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .teams {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .vs {
+            margin: 0 10px;
+            color: #9ca3af;
+        }
+
+        .match-info {
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .predict-btn {
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .predict-btn:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Football Predictor</h1>
+    <p>Прогнозирование результатов матчей на основе статистики и новостей</p>
+</header>
+
+<main>
+
+    <h2>Предстоящие матчи</h2>
+
+    <div class="matches">
+
+    {% for match in matches %}
+
+    <div class="match-card">
+
+        <div>
+            <div class="teams">
+                {{ match.home_team }}
+                <span class="vs">vs</span>
+                {{ match.away_team }}
+            </div>
+
+            <div class="match-info">
+                {{ match.competition }}
+                ·
+                {{ match.match_date.strftime("%d.%m.%Y %H:%M") }}
+            </div>
+        </div>
+
+        <a
+            href="/matches/{{ match.id }}"
+            class="predict-btn"
+        >
+            Сделать прогноз
+        </a>
+
+    </div>
+
+    {% endfor %}
+
+
+    </div>
+
+</main>
+
+</body>
+</html>
