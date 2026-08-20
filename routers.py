@@ -1,9 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import select
-
-from api import get_news
 from database import AsyncSessionLocal
-from models import Statistic, Match
+from models import Statistic, Match, News
 from services import save_matches, save_statistics, save_news
 
 router = APIRouter(prefix="/matches", tags=["matches"])
@@ -42,12 +40,20 @@ async def get_matches():
         return result.all()
 
 
-@router.get("/news")
-async def news():
-    return await get_news()
+
 
 
 @router.post("/news")
 async def update_news():
     await save_news()
     return {"message": "News saved successfully"}
+
+
+@router.get("/news")
+async def news():
+    async with AsyncSessionLocal as session:
+        result = await session.scalars(
+            select(News)
+        )
+        return result.all()
+
