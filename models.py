@@ -7,18 +7,19 @@ from database import Base
 
 
 class Match(Base):
-    __tablename__='matches'
-    id:Mapped[int] = mapped_column(primary_key=True)
-    home_team:Mapped[str] = mapped_column(String(100))
-    away_team:Mapped[str] = mapped_column(String(100))
-    match_date:Mapped[DateTime] = mapped_column(DateTime)
-    status:Mapped[str] = mapped_column(String(30))
-    competition:Mapped[str] = mapped_column(String(100))
+    __tablename__ = "matches"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    home_team: Mapped[str] = mapped_column(String(100))
+    away_team: Mapped[str] = mapped_column(String(100))
+    match_date: Mapped[DateTime] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(String(30))
+    competition: Mapped[str] = mapped_column(String(100))
 
 
 class Statistic(Base):
-    """"турнирная статистика команд"""
-    __tablename__ = 'statistic'
+    """ "турнирная статистика команд"""
+
+    __tablename__ = "statistic"
     id: Mapped[int] = mapped_column(primary_key=True)
     team: Mapped[str] = mapped_column(String(100))
     wins: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -28,11 +29,10 @@ class Statistic(Base):
     goals_conceded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
-
 class News(Base):
-    __tablename__ = 'news'
+    __tablename__ = "news"
     id: Mapped[int] = mapped_column(primary_key=True)
-    author:Mapped[str | None]
+    author: Mapped[str | None]
     title: Mapped[str | None]
     description: Mapped[str | None]
     url: Mapped[str] = mapped_column(unique=True)
@@ -95,6 +95,3 @@ class Prediction(Base):
     is_correct: Mapped[bool | None] = mapped_column(
         nullable=True,
     )
-
-
-

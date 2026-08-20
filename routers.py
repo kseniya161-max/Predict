@@ -1,14 +1,18 @@
-
 from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy import select
 from database import AsyncSessionLocal
 from models import Statistic, Match, News, Prediction
-from services import save_matches, save_statistics, save_news, calculate_prediction, update_results
+from services import (
+    save_matches,
+    save_statistics,
+    save_news,
+    calculate_prediction,
+    update_results,
+)
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 templates = Jinja2Templates(directory="templates")
-
 
 
 @router.post("/load")
@@ -32,9 +36,7 @@ async def update_statistics():
 @router.get("/statistics")
 async def get_statistics():
     async with AsyncSessionLocal() as session:
-        result = await session.scalars(
-            select(Statistic)
-        )
+        result = await session.scalars(select(Statistic))
 
         return result.all()
 
@@ -42,14 +44,9 @@ async def get_statistics():
 @router.get("/matches")
 async def get_matches():
     async with AsyncSessionLocal() as session:
-        result = await session.scalars(
-            select(Match)
-        )
+        result = await session.scalars(select(Match))
 
         return result.all()
-
-
-
 
 
 @router.post("/news")
@@ -61,17 +58,15 @@ async def update_news():
 @router.get("/news")
 async def news():
     async with AsyncSessionLocal() as session:
-        result = await session.scalars(
-            select(News)
-        )
+        result = await session.scalars(select(News))
         return result.all()
 
 
 @router.post("/matches/{match_id:int}")
-async def get_predictions(match_id:int):
+async def get_predictions(match_id: int):
     result = await calculate_prediction(match_id)
     if not result:
-        raise HTTPException(status_code=404, detail='Statistic or Match not found')
+        raise HTTPException(status_code=404, detail="Statistic or Match not found")
     return result
 
 
@@ -98,9 +93,7 @@ async def prediction_page(
     match_id: int,
 ):
     async with AsyncSessionLocal() as session:
-        match = await session.scalar(
-            select(Match).where(Match.id == match_id)
-        )
+        match = await session.scalar(select(Match).where(Match.id == match_id))
 
         prediction = await session.scalar(
             select(Prediction)
@@ -109,10 +102,7 @@ async def prediction_page(
         )
 
     if not match or not prediction:
-        raise HTTPException(
-            status_code=404,
-            detail="Match or prediction not found"
-        )
+        raise HTTPException(status_code=404, detail="Match or prediction not found")
 
     return templates.TemplateResponse(
         request=request,
@@ -148,4 +138,3 @@ async def predictions_page(request: Request):
             "predictions": predictions,
         },
     )
-
