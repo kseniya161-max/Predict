@@ -83,7 +83,7 @@ async def get_predictions():
 async def matches_page(request: Request):
     async with AsyncSessionLocal() as session:
         result = await session.scalars(
-            select(Match).order_by(Match.match_date)
+            select(Match).order_by(Match.match_date).limit(10)
         )
         matches = result.all()
 
@@ -92,6 +92,64 @@ async def matches_page(request: Request):
         name="index.html",
         context={
             "matches": matches,
+        },
+    )
+
+
+@router.get("/{match_id}/prediction")
+async def prediction_page(
+    request: Request,
+    match_id: int,
+):
+    async with AsyncSessionLocal() as session:
+        match = await session.scalar(
+            select(Match).where(Match.id == match_id)
+        )
+
+        prediction = await session.scalar(
+            select(Prediction).where(
+                Prediction.match_id == match_id
+            )
+        )
+
+    if not match:
+        raise HTTPException(
+            status_code=404,
+            detail="Match not found"
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="prediction.html",
+        context={
+            "match": match,
+            "prediction": prediction,
+        },
+    )
+
+
+@router.get("/predictions")
+async def get_predictions():
+    async with AsyncSessionLocal() as session:
+        result = await session.scalars(
+            select(Prediction).order_by(Prediction.created_at.desc())
+        )
+        return result.all()
+
+
+@router.get("/predictions/page")
+async def predictions_page(request: Request):
+    async with AsyncSessionLocal() as session:
+        result = await session.scalars(
+            select(Prediction).order_by(Prediction.created_at.desc())
+        )
+        predictions = result.all()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="predictions.html",
+        context={
+            "predictions": predictions,
         },
     )
 

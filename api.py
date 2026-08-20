@@ -36,7 +36,12 @@ async def get_standings():
             if response.status_code == 404:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
             response.raise_for_status()
-            return response.json()
+            # return response.json()
+            data = response.json()
+
+            print(data["standings"][0]["table"][:2])
+
+            return data
     except httpx.HTTPStatusError as e:
         raise HTTPException (status_code=502, detail=f'HTTPStatusError {str(e)}')
     except httpx.RequestError as e:
