@@ -1,5 +1,5 @@
 from datetime import datetime
-from http.client import HTTPException
+from fastapi import HTTPException
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -97,6 +97,16 @@ async def calculate_prediction(match_id: int):
         home_stat = await session.scalar(select(Statistic).where(Statistic.team == match.home_team))
         away_stat = await session.scalar(select(Statistic).where(Statistic.team == match.away_team))
 
+
+        home_news = await session.scalars(select(News).where(News.title.ilike(f'%{match.home_team}%')))
+        away_news = await session.scalars(select(News).where (News.title.ilike(f'%{match.away_team}%')))
+
+        home_news = home_news.all()
+        away_news = away_news.all()
+
+        home_news_score = get_news_score(home_news)
+        away_news_score = get_news_score(away_news)
+
         if not home_stat or not away_stat:
             raise HTTPException(status_code=404,detail='NOT FOUND')
         home_form = home_stat.wins * 3 + home_stat.draws
@@ -120,6 +130,9 @@ async def calculate_prediction(match_id: int):
                 + away_defense * 0.2
         )
 
+        home_score += home_news_score
+        away_score += away_news_score
+
         difference = abs(home_score - away_score)
 
         if difference < 5:
@@ -140,6 +153,8 @@ async def calculate_prediction(match_id: int):
         reasons = [
             f"{match.home_team} score: {home_score:.2f}",
             f"{match.away_team} score: {away_score:.2f}",
+            f"{match.home_team} news score: {home_news_score}",
+            f"{match.away_team} news score: {away_news_score}",
             f"Score difference: {difference:.2f}",
         ]
 
@@ -159,5 +174,26 @@ async def calculate_prediction(match_id: int):
         return prediction
 
 
+POSITIVE_WORDS = [
+    "win", "victory", "return", "returns", "boost",
+    "good", "positive", "success", "sign"
+]
+
+NEGATIVE_WORDS = [
+    "injury", "injured", "loss", "lose", "suspension",
+    "suspended", "out", "negative", "problem"
+]
+
+def get_news_score(news):
+    score = 0
+    for item in news:
+        text = f"{item.title or ''} {item.description or ''}".lower()
+        for word in POSITIVE_WORDS:
+            if word in text:
+                score += 1
+        for word in NEGATIVE_WORDS:
+            if word in text:
+                score -= 1
+    return score
 
 
