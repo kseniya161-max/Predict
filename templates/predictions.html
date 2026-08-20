@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогнозы</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .prediction {
+            background: white;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+
+        .result {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #6b7280;
+        }
+
+        .reasons {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+
+<body>
+
+<main>
+
+    <h1>Сохранённые прогнозы</h1>
+
+    {% for prediction in predictions %}
+
+    <div class="prediction">
+
+        <div class="result">
+            {{ prediction.predicted_result }}
+        </div>
+
+        <div class="info">
+            Уверенность: {{ prediction.confidence }}%
+            · Риск: {{ prediction.risk }}
+        </div>
+
+        <div class="info">
+            Score:
+            {{ "%.2f"|format(prediction.score_home) }}
+            -
+            {{ "%.2f"|format(prediction.score_away) }}
+        </div>
+
+        <div class="reasons">
+            {{ prediction.reasons }}
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</main>
+
+</body>
+</html>
