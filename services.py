@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import HTTPException
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from api import get_matches, get_standings, get_news
 from models import Match, Statistic, News, Prediction
@@ -45,9 +45,7 @@ async def save_statistics():
     async with AsyncSessionLocal() as session:
         for item in table:
             existing_item = await session.scalar(
-                select(Statistic).where(
-                    Statistic.team == item["team"]["name"]
-                )
+                select(Statistic).where(Statistic.team == item["team"]["name"])
             )
 
             if existing_item:
@@ -77,10 +75,11 @@ async def save_news():
     articles = data["articles"]
     async with AsyncSessionLocal() as session:
         for article in articles:
-            existing_news = await session.scalar(select(News).where (News.url == article['url']))
+            existing_news = await session.scalar(
+                select(News).where(News.url == article["url"])
+            )
             if existing_news:
                 continue
-
 
             new_news = News(
                 author=article["author"],
@@ -103,11 +102,19 @@ async def calculate_prediction(match_id: int):
         match = await session.scalar(select(Match).where(Match.id == match_id))
         if not match:
             return None
-        home_stat = await session.scalar(select(Statistic).where(Statistic.team == match.home_team))
-        away_stat = await session.scalar(select(Statistic).where(Statistic.team == match.away_team))
+        home_stat = await session.scalar(
+            select(Statistic).where(Statistic.team == match.home_team)
+        )
+        away_stat = await session.scalar(
+            select(Statistic).where(Statistic.team == match.away_team)
+        )
 
-        home_news = await session.scalars(select(News).where(News.title.ilike(f'%{match.home_team}%')))
-        away_news = await session.scalars(select(News).where (News.title.ilike(f'%{match.away_team}%')))
+        home_news = await session.scalars(
+            select(News).where(News.title.ilike(f"%{match.home_team}%"))
+        )
+        away_news = await session.scalars(
+            select(News).where(News.title.ilike(f"%{match.away_team}%"))
+        )
 
         home_news = home_news.all()
         away_news = away_news.all()
@@ -116,7 +123,7 @@ async def calculate_prediction(match_id: int):
         away_news_score = get_news_score(away_news)
 
         if not home_stat or not away_stat:
-            raise HTTPException(status_code=404,detail='NOT FOUND')
+            raise HTTPException(status_code=404, detail="NOT FOUND")
         home_form = home_stat.wins * 3 + home_stat.draws
         away_form = away_stat.wins * 3 + away_stat.draws
 
@@ -126,17 +133,9 @@ async def calculate_prediction(match_id: int):
         home_defense = -home_stat.goals_conceded
         away_defense = -away_stat.goals_conceded
 
-        home_score = (
-                home_form * 0.5
-                + home_attack * 0.3
-                + home_defense * 0.2
-        )
+        home_score = home_form * 0.5 + home_attack * 0.3 + home_defense * 0.2
 
-        away_score = (
-                away_form * 0.5
-                + away_attack * 0.3
-                + away_defense * 0.2
-        )
+        away_score = away_form * 0.5 + away_attack * 0.3 + away_defense * 0.2
 
         home_score += home_news_score
         away_score += away_news_score
@@ -183,14 +182,29 @@ async def calculate_prediction(match_id: int):
 
 
 POSITIVE_WORDS = [
-    "win", "victory", "return", "returns", "boost",
-    "good", "positive", "success", "sign"
+    "win",
+    "victory",
+    "return",
+    "returns",
+    "boost",
+    "good",
+    "positive",
+    "success",
+    "sign",
 ]
 
 NEGATIVE_WORDS = [
-    "injury", "injured", "loss", "lose", "suspension",
-    "suspended", "out", "negative", "problem"
+    "injury",
+    "injured",
+    "loss",
+    "lose",
+    "suspension",
+    "suspended",
+    "out",
+    "negative",
+    "problem",
 ]
+
 
 def get_news_score(news):
     score = 0
@@ -210,15 +224,12 @@ async def update_results():
 
     async with AsyncSessionLocal() as session:
         for item in data["matches"]:
-            match = await session.scalar(
-                select(Match).where(Match.id == item["id"])
-            )
+            match = await session.scalar(select(Match).where(Match.id == item["id"]))
 
             if not match:
                 continue
 
             match.status = item["status"]
-
 
             if item["status"] != "FINISHED":
                 continue
@@ -236,17 +247,11 @@ async def update_results():
                 actual_result = "DRAW"
 
             prediction = await session.scalar(
-                select(Prediction).where(
-                    Prediction.match_id == match.id
-                )
+                select(Prediction).where(Prediction.match_id == match.id)
             )
 
             if prediction:
                 prediction.actual_result = actual_result
-                prediction.is_correct = (
-                    prediction.predicted_result == actual_result
-                )
+                prediction.is_correct = prediction.predicted_result == actual_result
 
         await session.commit()
-
-
