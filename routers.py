@@ -1,8 +1,10 @@
+from http.client import HTTPException
+
 from fastapi import APIRouter
 from sqlalchemy import select
 from database import AsyncSessionLocal
 from models import Statistic, Match, News
-from services import save_matches, save_statistics, save_news
+from services import save_matches, save_statistics, save_news, calculate_prediction
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
@@ -56,4 +58,13 @@ async def news():
             select(News)
         )
         return result.all()
+
+
+@router.post("/matches/{match_id:int}")
+async def get_predictions(match_id:int):
+    result = await calculate_prediction(match_id)
+    if not result:
+        raise HTTPException(status_code=404, detail='Statistic or Match not found')
+    return result
+
 
