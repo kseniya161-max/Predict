@@ -1,10 +1,11 @@
 from datetime import datetime
+from http.client import HTTPException
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api import get_matches, get_standings, get_news
-from models import Match, Statistic, News
+from models import Match, Statistic, News, Prediction
 from database import AsyncSessionLocal
 
 
@@ -86,6 +87,77 @@ async def save_news():
 
             session.add(new_news)
         await session.commit()
+
+
+async def calculate_prediction(match_id: int):
+    async with AsyncSessionLocal() as session:
+        match = await session.scalar(select(Match).where(Match.id == match_id))
+        if not match:
+            return None
+        home_stat = await session.scalar(select(Statistic).where(Statistic.team == match.home_team))
+        away_stat = await session.scalar(select(Statistic).where(Statistic.team == match.away_team))
+
+        if not home_stat or not away_stat:
+            raise HTTPException(status_code=404,detail='NOT FOUND')
+        home_form = home_stat.wins * 3 + home_stat.draws
+        away_form = away_stat.wins * 3 + away_stat.draws
+
+        home_attack = home_stat.goals_scored
+        away_attack = away_stat.goals_scored
+
+        home_defense = -home_stat.goals_conceded
+        away_defense = -away_stat.goals_conceded
+
+        home_score = (
+                home_form * 0.5
+                + home_attack * 0.3
+                + home_defense * 0.2
+        )
+
+        away_score = (
+                away_form * 0.5
+                + away_attack * 0.3
+                + away_defense * 0.2
+        )
+
+        difference = abs(home_score - away_score)
+
+        if difference < 5:
+            predicted_result = "DRAW"
+        elif home_score > away_score:
+            predicted_result = "HOME_WIN"
+        else:
+            predicted_result = "AWAY_WIN"
+
+        confidence = min(95, 50 + difference)
+        if difference < 5:
+            risk = "HIGH"
+        elif difference < 15:
+            risk = "MEDIUM"
+        else:
+            risk = "LOW"
+
+        reasons = [
+            f"{match.home_team} score: {home_score:.2f}",
+            f"{match.away_team} score: {away_score:.2f}",
+            f"Score difference: {difference:.2f}",
+        ]
+
+        prediction = Prediction(
+            match_id=match.id,
+            predicted_result=predicted_result,
+            confidence=confidence,
+            risk=risk,
+            score_home=home_score,
+            score_away=away_score,
+            reasons="\n".join(reasons),
+        )
+
+        session.add(prediction)
+        await session.commit()
+
+        return prediction
+
 
 
 
