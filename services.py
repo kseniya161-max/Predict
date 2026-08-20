@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api import get_matches, get_standings
-from models import Match, Statistic
+from api import get_matches, get_standings, get_news
+from models import Match, Statistic, News
 from database import AsyncSessionLocal
 
 
@@ -60,3 +60,32 @@ async def save_statistics():
             session.add(new_statistic)
 
         await session.commit()
+
+
+async def save_news():
+    data = await get_news()
+    articles = data["articles"]
+    async with AsyncSessionLocal() as session:
+        for article in articles:
+            existing_news = await session.scalar(select(News).where (News.url == article['url']))
+            if existing_news:
+                continue
+
+
+            new_news = News(
+                author=article["author"],
+                title=article["title"],
+                description=article["description"],
+                url=article["url"],
+                image_url=article["urlToImage"],
+                published_at=datetime.fromisoformat(
+                    article["publishedAt"].replace("Z", "+00:00")
+                ),
+                content=article["content"],
+            )
+
+            session.add(new_news)
+        await session.commit()
+
+
+

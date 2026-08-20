@@ -35,7 +35,7 @@ class News(Base):
     author:Mapped[str | None]
     title: Mapped[str | None]
     description: Mapped[str | None]
-    url: Mapped[str]
+    url: Mapped[str] = mapped_column(unique=True)
     image_url: Mapped[str | None]
     published_at: Mapped[datetime]
     content: Mapped[str | None]
