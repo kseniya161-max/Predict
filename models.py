@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from sqlalchemy import String, DateTime, BigInteger, Integer
 from sqlalchemy.orm import Mapped, mapped_column
@@ -26,30 +27,17 @@ class Statistic(Base):
     goals_scored: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     goals_conceded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-#
-#
-# id
-# team
-# title
-# description
-# published_at
-# source
-# url
-# Из таких новостей нам нужны примерно:
-#
-# заголовок новости
-# текст/описание новости
-# дата публикации
-# ссылка на новость
-# источник
-# к какой команде относится
-#
-# То есть условно наша будущая модель:
-#News
-# ├── id
-# ├── team
-# ├── title
-# ├── description
-# ├── published_at
-# ├── url
-# └── source
+
+
+class News(Base):
+    __tablename__ = 'news'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    author:Mapped[str | None]
+    title: Mapped[str | None]
+    description: Mapped[str | None]
+    url: Mapped[str]
+    image_url: Mapped[str | None]
+    published_at: Mapped[datetime]
+    content: Mapped[str | None]
+
+

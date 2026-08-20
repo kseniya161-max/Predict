@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import select
 
+from api import get_news
 from database import AsyncSessionLocal
 from models import Statistic, Match
 from services import save_matches, save_statistics
@@ -39,3 +40,8 @@ async def get_matches():
         )
 
         return result.all()
+
+
+@router.get("/news")
+async def news():
+    return await get_news()
