@@ -51,7 +51,7 @@ async def update_news():
 
 @router.get("/news")
 async def news():
-    async with AsyncSessionLocal as session:
+    async with AsyncSessionLocal() as session:
         result = await session.scalars(
             select(News)
         )
