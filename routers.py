@@ -4,7 +4,7 @@ from sqlalchemy import select
 from api import get_news
 from database import AsyncSessionLocal
 from models import Statistic, Match
-from services import save_matches, save_statistics
+from services import save_matches, save_statistics, save_news
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
@@ -45,3 +45,9 @@ async def get_matches():
 @router.get("/news")
 async def news():
     return await get_news()
+
+
+@router.post("/news")
+async def update_news():
+    await save_news()
+    return {"message": "News saved successfully"}
