@@ -40,25 +40,34 @@ async def save_matches():
 
 async def save_statistics():
     data = await get_standings()
-    table = data["standings"][0]['table']
+    table = data["standings"][0]["table"]
 
     async with AsyncSessionLocal() as session:
         for item in table:
             existing_item = await session.scalar(
-                select(Statistic).where(Statistic.team == item["team"]["name"]))
+                select(Statistic).where(
+                    Statistic.team == item["team"]["name"]
+                )
+            )
 
             if existing_item:
-                continue
+                existing_item.wins = item["won"]
+                existing_item.draws = item["draw"]
+                existing_item.losses = item["lost"]
+                existing_item.goals_scored = item["goalsFor"]
+                existing_item.goals_conceded = item["goalsAgainst"]
 
-            new_statistic = Statistic(
-                team=item["team"]["name"],
-                wins=item["won"],
-                draws=item["draw"],
-                losses=item["lost"],
-                goals_scored=item["goalsFor"],
-                goals_conceded=item["goalsAgainst"],
-            )
-            session.add(new_statistic)
+            else:
+                new_statistic = Statistic(
+                    team=item["team"]["name"],
+                    wins=item["won"],
+                    draws=item["draw"],
+                    losses=item["lost"],
+                    goals_scored=item["goalsFor"],
+                    goals_conceded=item["goalsAgainst"],
+                )
+
+                session.add(new_statistic)
 
         await session.commit()
 
@@ -96,7 +105,6 @@ async def calculate_prediction(match_id: int):
             return None
         home_stat = await session.scalar(select(Statistic).where(Statistic.team == match.home_team))
         away_stat = await session.scalar(select(Statistic).where(Statistic.team == match.away_team))
-
 
         home_news = await session.scalars(select(News).where(News.title.ilike(f'%{match.home_team}%')))
         away_news = await session.scalars(select(News).where (News.title.ilike(f'%{match.away_team}%')))
@@ -195,5 +203,50 @@ def get_news_score(news):
             if word in text:
                 score -= 1
     return score
+
+
+async def update_results():
+    data = await get_matches()
+
+    async with AsyncSessionLocal() as session:
+        for item in data["matches"]:
+            match = await session.scalar(
+                select(Match).where(Match.id == item["id"])
+            )
+
+            if not match:
+                continue
+
+            match.status = item["status"]
+
+
+            if item["status"] != "FINISHED":
+                continue
+
+            score = item["score"]["fullTime"]
+
+            home_score = score["home"]
+            away_score = score["away"]
+
+            if home_score > away_score:
+                actual_result = "HOME_WIN"
+            elif away_score > home_score:
+                actual_result = "AWAY_WIN"
+            else:
+                actual_result = "DRAW"
+
+            prediction = await session.scalar(
+                select(Prediction).where(
+                    Prediction.match_id == match.id
+                )
+            )
+
+            if prediction:
+                prediction.actual_result = actual_result
+                prediction.is_correct = (
+                    prediction.predicted_result == actual_result
+                )
+
+        await session.commit()
 
 

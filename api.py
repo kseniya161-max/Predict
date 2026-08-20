@@ -29,23 +29,52 @@ async def get_matches():
         raise HTTPException(status_code=502, detail=f'Bad gateway {str(e)}')
 
 
+# async def get_standings():
+#     try:
+#         async with httpx.AsyncClient() as client:
+#             response = await client.get(f'{BASE_URL}competitions/PL/standings', headers=headers)
+#             if response.status_code == 404:
+#                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+#             response.raise_for_status()
+#             # return response.json()
+#             data = response.json()
+#
+#             print(data["standings"][0]["table"][:2])
+#
+#             return data
+#     except httpx.HTTPStatusError as e:
+#         raise HTTPException (status_code=502, detail=f'HTTPStatusError {str(e)}')
+#     except httpx.RequestError as e:
+#         raise HTTPException(status_code=502, detail=f'Bad gateway {str(e)}')
+
+
 async def get_standings():
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f'{BASE_URL}competitions/PL/standings', headers=headers)
-            if response.status_code == 404:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+            response = await client.get(
+                f"{BASE_URL}competitions/PL/standings?season=2025",
+                headers=headers
+            )
+
             response.raise_for_status()
-            # return response.json()
+
             data = response.json()
 
             print(data["standings"][0]["table"][:2])
 
             return data
+
     except httpx.HTTPStatusError as e:
-        raise HTTPException (status_code=502, detail=f'HTTPStatusError {str(e)}')
+        raise HTTPException(
+            status_code=502,
+            detail=f"HTTPStatusError {str(e)}"
+        )
+
     except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f'Bad gateway {str(e)}')
+        raise HTTPException(
+            status_code=502,
+            detail=f"Bad gateway {str(e)}"
+        )
 
 
 async def get_news():

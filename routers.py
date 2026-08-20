@@ -1,10 +1,10 @@
-from http.client import HTTPException
+
 from fastapi.templating import Jinja2Templates
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy import select
 from database import AsyncSessionLocal
 from models import Statistic, Match, News, Prediction
-from services import save_matches, save_statistics, save_news, calculate_prediction
+from services import save_matches, save_statistics, save_news, calculate_prediction, update_results
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 templates = Jinja2Templates(directory="templates")
@@ -15,6 +15,12 @@ templates = Jinja2Templates(directory="templates")
 async def load_matches():
     await save_matches()
     return {"messages": "matches are loaded successfully"}
+
+
+@router.post("/update-results")
+async def update_match_results():
+    await update_results()
+    return {"message": "Results updated successfully"}
 
 
 @router.post("/statistics")
@@ -69,16 +75,6 @@ async def get_predictions(match_id:int):
     return result
 
 
-@router.get("/predictions")
-async def get_predictions():
-    async with AsyncSessionLocal() as session:
-        result = await session.scalars(
-            select(Prediction)
-        )
-        return result.all()
-
-
-
 @router.get("/page")
 async def matches_page(request: Request):
     async with AsyncSessionLocal() as session:
@@ -107,15 +103,15 @@ async def prediction_page(
         )
 
         prediction = await session.scalar(
-            select(Prediction).where(
-                Prediction.match_id == match_id
-            )
+            select(Prediction)
+            .where(Prediction.match_id == match_id)
+            .order_by(Prediction.created_at.desc())
         )
 
-    if not match:
+    if not match or not prediction:
         raise HTTPException(
             status_code=404,
-            detail="Match not found"
+            detail="Match or prediction not found"
         )
 
     return templates.TemplateResponse(
